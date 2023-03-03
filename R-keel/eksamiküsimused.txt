@@ -1,0 +1,56 @@
+Kordamisküsimused
+
+* R-i kasutusvaldkonnad, käivitamise moodused, ajalugu. - andmete analüüsimiseks peamiselt, mõistlikum on kasutada
+kui sul on väga palju (10 000, 100 000 jne) andmeid, on igasugu erinevaid abipakette nt leaflet- saab kaarte teha,
+rgl - interaktiivsed 3-d visualiseerimised R-iga.
+ 
+* Tehted, muutujad, andmevektorid/massiivid, tehted arvude ja vektoritega - kui teed c(1,2), siis ta võtab neid kui arve,
+kui teed c(1, tere), siis ta muudab 1 ka tekstiks. Collectionisse ehk c() saab panna ühesuguseid andmeid, Listi saab
+panna erinevaid tüüpi andmeid. Vektorite korrutamine arvuga ja vektorite liitmine toimub nii nagu ikka. 
+
+* Joonised "vana" R-i vahenditega - hist() ja andmed- annab kohe andmetest histogrammi, plot() ja andmed - annab
+kohe andmetest mingi nö joonise,bowplot() ja andmed- annab kast graafiku
+
+* Tidyverse eesmärgid, võimalused. - eeldab, et andmed on samasugustes tibble tabelites, mõte on selles, et saab 
+mingeid andmeid küsida ning alati on vastus tabel, et saaks nagu edasi küsida ja uurida, kõik hoitakse nö korras,
+kui niisama oleks vastuseid vaja, mida edasi ei ole vaja kasutada, siis on mõistlikum ja lihtsam kasutada niisama R
+ilma tidyverse paketita
+ 
+* Tibble - tabeliks, filter - filtreeri midagi, arrange - järjesta kuidagi, summarise- tee kokkuvõte millegi põhjal,
+group_by - grupeeri millegi järgi, mutate- muteeri midagi mingite asjade järgi
+
+* Ggplot2 jooniste koostamine - nt kui on siis lähed tabel%>%ggplot(aes(x,y))+geom_point()
+
+* Andmetabeli pikk ja lai kuju, kasutamine jooniste juures - kui tulpasid on rohkem siis on lai ja kui ridu on palju,
+siis on pikk, arvutile on mugavam kui on pigem pikk, sest on tülikam tulpasid juurde panna (sest vahetevahel peab tegema
+terve programmi ümber, et uut tulpa arvestada), kui ridu , kui on lai tabel ja tahad tulpdiagrammi, siis on mõistlik
+teha ümber pikaks tabeliks enne (käsuga gather(andmekogum, tulp1, tulp2, .., -tulpn, käsuga spread() saad laiaks teha
+tabeli), kui paned - tulba nime ette,siis ta seda ei arvesta) ja siis plotida
+
+* Animatsioonide loomine R-is
+    pakett animation - kaadrite kaupa animatsioonid - saab erinevaid pilte ja pigem mõeldud just eraldiseisvate
+animeerimiseks 
+    pakett gganimate - transition_states - järjestikused kaadrid on seotud, teeb sujuvamad joonised
+
+* Proportsioonide test - prop.test - palju on mingeid kindlaid asju koguhulgast, täpsuse suurendamiseks saab panna 
+lõppu conf.level = 0.99 või suurendada üldarvu
+
+* sapply toimimine ja kasutamine
+
+* Asukohtadega seotud andmete illustreerimine, näited
+
+* T-test ja keskmiste võrdlemine - seotud aritmeetilise keskmisega, võrdleb erinevate andmekogumite keskmiseid ja 
+nende kattumisi, eeldab, et võetakse samasugustest andmestikest, kui on üks muutuja, siis uurib kas tegelik keskmine
+erineb mingist hüpoteetilisest või mingist normist, t.test(uus andmestik, mu= vanakeskmine), mida väiksem on p, seda
+suurema tõenäosusega on erinevad andmekogumid
+
+* Normaaljaotus, binoomjaotus, ühtlane jaotus, Poissoni jaotus
+* Korrelatsioon ning selle kasutamine andmete illustreerimisel
+* Regressioon ning selle kasutamine väärtuste ennustamisel
+* Peakomponentide analüüs ja dimensioonide vähendamine. Kasutuskohad.
+* Mitmemõõtmeline skaaleerimine ja selle kasutusvõimalused
+* Loodusnähtuste ja olukordade simuleerimine
+* Müügiandmete analüüsivõimalusi
+* Noodiandmete analüüsivõimalusi ja -vahendeid.
+* Shiny veebirakenduse loomine
+* RMarkdowni abil vastuselehe loomine

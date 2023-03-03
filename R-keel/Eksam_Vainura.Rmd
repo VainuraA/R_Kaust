@@ -1,0 +1,334 @@
+---
+title: "Eksamitöö"
+author: "Anne-Mari Vainura"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Eksamitöö Marveli filmide andmetega
+
+Alustuseks loen sisse kõik paketid ja andmed, mida kasutama hakkan.
+
+```{r, message=FALSE}
+library(tidyverse)
+library(dplyr)
+library(stringr)
+library(lubridate)
+library(shiny)
+library(ggpubr)
+library(plotly)
+filmi_andmed <- read_csv("marvel.csv")
+```
+
+Kuna tabelis on eraldi avamisnädalavahetuse ja ülemaailmsed tulud, siis lisasin tulba, kus need on kokku arvestatud, et kõik rahad kokku tulp ka olemas
+
+```{r, message=FALSE}
+filmi_andmed = filmi_andmed%>%mutate(All_over = Worldwide + `Opening weekend(North America)`,`Release date(United States)` = as.Date(filmi_andmed$`Release date(United States)`, "%d.%m.%Y") )
+```
+
+
+## Stuudiote kokkuvõte
+
+Vaatasin alustuseks mitu Marveli filmi antud stuudiod välja lasid ja kes kõige rohkem ja kes kõige vähem. Selleks tegin eraldi tabeli, mis näitab mitu korda igat stuudiot on tabelis esinenud. Kasutasin as.list käsku selleks, et vastust oleks lihtsam lugeda ning, et see oleks natuke kompaktsem.
+
+```{r, message=FALSE}
+stuudiod = filmi_andmed %>% count(`Distributor(s)`)
+as.list(stuudiod[which.max(stuudiod$n),1])
+as.list(stuudiod[which.min(stuudiod$n),1])
+```
+
+Tegin ka sektordiagrammi kõigi stuudiotega, et näidata, palju iga üks neist filme välja lasi ning palju see kõigist Marveli filmidest moodustab
+
+```{r}
+plot_ly(stuudiod, labels =stuudiod$`Distributor(s)` , values =stuudiod$n, type = 'pie',
+        textposition = 'none',
+        hoverinfo = 'text',
+        text = stuudiod$`Distributor(s)`)
+```
+
+Teen ka kolme, kõige rohkem filme välja lasknud, stuudio kohta kerged kokkuvõtted.
+Selleks teen kolm tabelit, iga stuudio kohta ühe.
+```{r, message=FALSE}
+fox_20th = filmi_andmed%>%filter(`Distributor(s)`=="20th Century Fox")%>%mutate(Profit=All_over-Budget)%>%
+  mutate(`Release date(United States)`=as.numeric(year(`Release date(United States)`)))
+
+walt_disney = filmi_andmed%>%filter(`Distributor(s)`=="Walt Disney Studios Motion Pictures")%>%mutate(Profit=All_over-Budget)%>% mutate(`Release date(United States)`=as.numeric(year(`Release date(United States)`)))
+
+sony = filmi_andmed%>%filter(`Distributor(s)`=="Sony Pictures")%>%mutate(Profit=All_over-Budget)%>% mutate(`Release date(United States)`=as.numeric(year(`Release date(United States)`)))
+```
+
+Teen igale ühele graafikud eelarve, kogu tulu ja kasumi kohta aastate lõikes 
+
+20th Century Fow eelarve, kogu tulu ja kasum aastate peale
+```{r, echo=FALSE}
+fox_20th%>%ggplot(aes(`Release date(United States)`))+
+  geom_point(aes(y=Budget, color="Eelarve"))+
+  geom_point(aes(y=All_over, color="Kogu Tulu"))+
+  geom_point(aes(y=Profit, color="Kasum"))+
+  ggtitle("20th Century Fox")
+```
+
+Walt Disney Studios Motion Picturesi eelarve, kogu tulu ja kasum aastate peal 
+```{r, echo=FALSE}
+walt_disney%>%ggplot(aes(`Release date(United States)`))+
+  geom_col(aes(y=Profit, fill="Kasum", alpha= 0.5))+
+  geom_col(aes(y=All_over, fill="Kogu Tulu", alpha= 0.5))+
+  geom_col(aes(y=Budget,fill="Eelarve", alpha= 0.5))+
+  ggtitle("Walt Disney Studios Motion Pictures")
+```
+
+Sony Pictures´i eelarve, kogu tulu ja kasum aastate peale
+```{r, echo=FALSE}
+sony%>%ggplot(aes(`Release date(United States)`))+
+  geom_line(aes(y=Budget, color="Eelarve"))+
+  geom_line(aes(y=All_over, color="Kogu Tulu"))+
+  geom_line(aes(y=Profit, color="Kasum"))+
+  ggtitle("Sony Pictures")
+```
+
+
+## Filmide eelarved
+
+Tegin eraldi tabeli, kus on ainult filmi pealkiri, stuudio ja palju oli filmi eelarve. Samuti jagasin eelarve miljoniga läbi, sest kõik eelarved olid ilusad ümmargused arvud, kuid siiski kuvamiseks natuke ebaeeldivalt suured. Järjestasin tehtud tabeli ning võtsin tabeli pea ja saba:)
+
+```{r, message=FALSE}
+eelarve = filmi_andmed%>%select(Title, Budget, `Distributor(s)`)%>%mutate(Budget = Budget/1000000)%>%
+  rename(Budget_millions=Budget)
+p1 <- head(eelarve %>% arrange(Budget_millions)) %>% ggplot(aes(x=Title, y= Budget_millions, fill = Title))+ geom_col()+
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+p2 <-tail(eelarve %>% arrange(Budget_millions)) %>% ggplot(aes(x=Title, y= Budget_millions, fill = Title))+ geom_col()+
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+```
+
+Vähimad ja suurimad eelarvetega filmid (millionites dollarites)
+
+```{r, echo=FALSE, fig.width=12, fig.height=6}
+ggarrange(p1, p2, ncol = 2)
+```
+
+## Filmide tulud
+
+Siin vaatan eraldi kõiki juhte ehk kui palju filmid teenisid avanädalavahetusega Põhja-Ameerikas, üldiselt Põhja-Ameerika kinodes, muudes piirkondades, üle maailma kokku ning ka minu lisatud veeru kõik kokku, mis siis oli avanädalavahetuse rahad+ülemaailma rahad
+
+## Avanädalavahetus Põhja-Ameerika
+
+Millistel filmidel oli suurim tulu avanädalavahetusel Põhja-Ameerikas? Selleks tegin eraldi tabeli, kus on filmi pealkiri ja avanädalavahetusel teenitud summa Põhja-Ameerikas ning seejärel järjestasin selle tabeli, et jällegi võtta tabeli otsad ning jagasin ka siin miljoniga, sest jällegi on arvud liiga suured, et neid täissuuruses kuvada
+
+```{r, message=FALSE}
+opening_wknd = filmi_andmed %>% select(Title, `Opening weekend(North America)`)%>%mutate(`Opening weekend(North America)`=`Opening weekend(North America)`/1000000)%>%rename(open_wknd = `Opening weekend(North America)` )
+p3 <-head(opening_wknd %>% arrange(open_wknd)) %>% ggplot(aes(x=Title, y= open_wknd, fill = Title))+ geom_col()+
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+p4 <-tail(opening_wknd %>% arrange(open_wknd)) %>% ggplot(aes(x=Title, y= open_wknd, fill = Title))+ geom_col()+
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+```
+
+Vähim ja suurim tulu avanädalavahetusel (millionites dollarites)
+
+```{r, echo=FALSE, fig.width=12, fig.height=6}
+ggarrange(p3, p4, ncol = 2)
+```
+
+## Üldiselt Põhja-Ameerika
+
+Jutt jääb samaks põhimõtteliselt.
+
+```{r, message=FALSE}
+north_America = filmi_andmed %>% select(Title, `North America`)%>%mutate(`North America`=`North America`/1000000)
+p5 <-head(north_America %>% arrange(`North America`)) %>% ggplot(aes(x=Title, y= `North America`, fill = Title))+ geom_col()+theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+p6 <-tail(north_America %>% arrange(`North America`)) %>% ggplot(aes(x=Title, y= `North America`, fill = Title))+ geom_col()+theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+```
+
+Vähim ja suurim tulu Põhja-Ameerika (millionites dollarites)
+
+```{r, echo=FALSE, fig.width=12, fig.height=6}
+ggarrange(p5, p6, ncol = 2)
+```
+
+## Muude territooriumite tulu
+
+```{r, message=FALSE}
+muu_ala = filmi_andmed %>% select(Title, `Other territories`)%>%mutate(`Other territories`=`Other territories`/1000000)
+p7 <-head(muu_ala %>% arrange(`Other territories`)) %>% ggplot(aes(x=Title, y= `Other territories`, fill = Title))+ geom_col()+theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+p8 <-tail(muu_ala %>% arrange(`Other territories`)) %>% ggplot(aes(x=Title, y= `Other territories`, fill = Title))+ geom_col()
+```
+
+Vähim ja suurim tulu muudel aladel (millionites dollarites)
+
+```{r, echo=FALSE, fig.width=12, fig.height=6}
+ggarrange(p7, p8, ncol = 2)
+```
+
+## Ülemaailmne tulu
+
+```{r, message=FALSE}
+üle_maailma = filmi_andmed %>% select(Title, Worldwide)%>% mutate(Worldwide=Worldwide/1000000)
+p9 <-head(üle_maailma %>% arrange(Worldwide)) %>% ggplot(aes(x=Title, y= Worldwide, fill = Title))+ geom_col()+theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+p10 <-tail(üle_maailma %>% arrange(Worldwide)) %>% ggplot(aes(x=Title, y= Worldwide, fill = Title))+ geom_col()+theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+```
+
+Väikseim ja suurim tulu ülemaailma (millionites dollarites)
+
+```{r, echo=FALSE, fig.width=12, fig.height=6}
+ggarrange(p9, p10, ncol = 2)
+```
+
+## Kõik tulud kokku ehk ülemaailmne+avanädal
+
+```{r, message=FALSE}
+kogu = filmi_andmed %>% select(Title, All_over)%>%mutate(All_over=All_over/1000000)
+p11 <-head(kogu %>% arrange(All_over)) %>% ggplot(aes(x=Title, y= All_over, fill = Title))+ geom_col()+theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+p12 <-tail(kogu %>% arrange(All_over)) %>% ggplot(aes(x=Title, y= All_over, fill = Title))+ geom_col()+theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+```
+
+Väikseim ja suurim kogu tulu
+
+```{r, echo=FALSE, fig.width=12, fig.height=6}
+ggarrange(p11, p12, ncol = 2)
+```
+
+## Kasum
+
+Vaataks järgmisena filmide kasumeid. Selleks, et mitte teha ainult tupldiagramme tegin seda punktidega. Koostasin uue tabeli, mis on esialgne tabel koos uue veeruga, mis näitab üldist kasumit
+
+```{r, message=FALSE}
+film1 =filmi_andmed%>%mutate(Profit= (All_over-Budget)/1000000, Budget=Budget/1000000)
+```
+
+Joonisel x-telg on eelarve ja y-telg on kasum. Mõlemal juhul jagasin miljoniga läbi, et oleks silmale lihtsam. Seega jällegi on mõlema telje arvud millionites dollarites.
+
+```{r, echo=FALSE}
+film1%>%ggplot(aes(Budget, Profit))+geom_point()+ggtitle("Eelarve ja kasumi vaheline seos")
+```
+
+Näeme, et kõik filmid on suhteliselt tihedalt v.a üks. Uuriks filmide eelarve ja kasumi vahelist seost, kas nad sõltuvad üksteisest.
+
+```{r}
+cor(film1$Budget, film1$Profit)
+```
+
+Korrelatsioon on negatiivne, aga joonise järgi ütleks, et kui seda ühte väärtust ei oleks, siis oleks korrelatsioon suure tõenäosusega positiivne. Seega uurime välja, mis on see ääres paiknev film.
+
+```{r}
+film1$Title[which.min(film1$Profit)]
+```
+
+Eemaldame selle meie tabelist ja teeme korrelatsiooni testi uuesti
+
+```{r}
+film2 = film1%>%slice(-(which.min(Profit)))
+cor.test(film2$Budget, film2$Profit)
+```
+
+Korreltasiooni testist selgub, et korrelatsioon on 0.7. Tõenäosus, et eelarve ja eelarve vahel ei ole seost on 1.1e-10 ehk 0,00000000011, seega väga väike ning 95% tõenäosusega võib nende andmete põhjal öelda, et eelarve ja kasumi vaheline korrelatsioon jääb vahemikku 0.56 - 0.81.
+
+## Kuupäevade järgi ka midagi
+
+Alustuseks loon uue tabeli, mis on originaal tabel, mille ma järjestasin kuupäevade järgi ning lisasin ka kasumi veeru.
+
+```{r message=FALSE}
+kuupv_tab = filmi_andmed[order(as.Date(filmi_andmed$`Release date(United States)`, format="%d.%m.%Y")),]%>%
+  mutate(`Release date(United States)`= as.Date(`Release date(United States)`, "%d.%m.%Y"))%>%
+  mutate(Profit= All_over-Budget)
+```
+
+Siis teen tabeli, mis on eelmine tabel, mis on grupeeritud aastate järgi ning milles olen eelarved, kogu teenistus ja ka kasum igale aastale kokku arvestanud.
+
+```{r, message=FALSE}
+aasta_tab = kuupv_tab%>%group_by(year=format(`Release date(United States)`, "%Y"))%>%
+  summarise(budget = sum(Budget)/1000000, kogu_tulu = sum(All_over)/1000000)%>%mutate(year = as.numeric(year), profit = (kogu_tulu-budget))
+```
+
+Nüüd teeks mõned graafikud , millel näeme iga aasta kohta eelarvet, kogu tulu ja kasumit
+
+```{r, message=FALSE}
+p13 <-aasta_tab%>%ggplot(aes(x = year, y = budget))+geom_point()+geom_line()+geom_text(aes(label = year), size =3, vjust = -0.5)
+p14 <-aasta_tab%>%ggplot(aes(x = year, y = kogu_tulu))+geom_point()+geom_line()+geom_text(aes(label = year), size =3, vjust = -0.5)
+p15 <-aasta_tab%>%ggplot(aes(x = year, y = profit))+geom_point()+geom_line()+geom_text(aes(label = year), size =3, vjust = -0.5)
+```
+```{r, echo=FALSE, fig.width=12}
+ggarrange(p13, p14, p15, ncol = 3)
+```
+
+## Shiny
+
+Tegin ka ühe shiny animatsiooni, millest saab vaadata, mis filmid mis aastatel olid ning mis olid nende filmide kasumid. Kahjuks ei ole igal aastal filmi, seega on mingite nihuti väärtuste korral graafik tühi.
+```{r, echo=FALSE}
+ui <- fluidPage(
+  titlePanel("Filmide numbrid aastate lõikes"),
+  sliderInput("aasta", "Aasta:", min = 1986,  max = 2021, value = 2020, step = 1),
+  plotOutput("distPlot")
+)
+
+server <- function(input, output) {
+  data_filtered <- reactive({
+    kuupv_tab %>% filter(year(`Release date(United States)`)==input$aasta)
+  }) 
+  output$distPlot <- renderPlot({
+    ggplot(data_filtered(), aes(x = `Release date(United States)`, y = Profit)) +
+      geom_point()+geom_text(aes(label = Title), size = 3, vjust = -0.5)
+  })
+}
+
+shinyApp(ui = ui, server = server)
+```
+
+## Niisama mingit jama
+
+Oma huvi pärast uurisin välja paketi ja käsu millega saab osalise vastega elemendid kogumikest välja otsida ning selle kasutamises/demonstreerimiseks otsisin välja kõik filmide seeriad ja lõpuks ka kõik need filmid mida on üks eksemplar
+
+```{r, message=FALSE}
+
+Iron_Man = filmi_andmed%>% filter(str_detect(Title, "Iron"))
+Avengers = filmi_andmed%>% filter(str_detect(Title, "Avengers"))
+Captain_America = filmi_andmed%>% filter(str_detect(Title, "America"))
+Venom = filmi_andmed%>% filter(str_detect(Title, "Venom"))
+X_Men = filmi_andmed%>% filter(str_detect(Title, "X-Men"))
+Spider_Man = filmi_andmed%>% filter(str_detect(Title, "Spider-Man"))
+Deadpool = filmi_andmed%>% filter(str_detect(Title, "Deadpool"))
+Thor = filmi_andmed%>% filter(str_detect(Title, "Thor"))
+Guardians = filmi_andmed%>% filter(str_detect(Title, "Guardians"))
+Hulk = filmi_andmed%>% filter(str_detect(Title, "Hulk"))
+Fantastic4 = filmi_andmed%>% filter(str_detect(Title, "Fantastic Four"))
+Blade = filmi_andmed%>% filter(str_detect(Title, "Blade"))
+Ghost_Rider = filmi_andmed%>% filter(str_detect(Title, "Ghost"))
+Ant_Man = filmi_andmed%>% filter(str_detect(Title, "Ant-Man"))
+Punisher = filmi_andmed%>% filter(str_detect(Title, "Punisher"))
+```
+Näiteks Iron Man filme on
+```{r}
+print(Iron_Man)
+```
+Või Spider-Man filme 
+```{r}
+print(Spider_Man)
+```
+
+Ning nende üksikute filmide leidmiseks ma paremat moodust ise ei leidnud, kindlasti on mõni parem variant ka.
+```{r, message=FALSE}
+f1 = filmi_andmed[!grepl("Iron", filmi_andmed$Title),]
+f2 = f1[!grepl("Avengers", f1$Title),]
+f3 = f2[!grepl("America", f2$Title),]                        
+f4 = f3[!grepl("Venom", f3$Title),]
+f5 = f4[!grepl("X-Men", f4$Title),]
+f6 = f5[!grepl("Spider-Man", f5$Title),]
+f7 = f6[!grepl("Deadpool", f6$Title),]
+f8 = f7[!grepl("Thor", f7$Title),]
+f9 = f8[!grepl("Guardians", f8$Title),]
+f10 = f9[!grepl("Hulk", f9$Title),]
+f11 = f10[!grepl("Fantastic Four", f10$Title),]
+f12 = f11[!grepl("Blade", f11$Title),]
+f13 = f12[!grepl("Ghost", f12$Title),]
+f14 = f13[!grepl("Ant-Man", f13$Title),]
+üksikud_filmid = f14[!grepl("Punisher", f14$Title),]
+```
+See on see üksikute filmide kogum
+```{r}
+print(üksikud_filmid)
+```
+
+

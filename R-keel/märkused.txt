@@ -1,0 +1,1 @@
+library(paketi nimi) on see mis laseb paketti kasutada
