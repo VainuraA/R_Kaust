@@ -1,5 +1,3 @@
 # R_Kaust
-See on minu repository
-* Punkt 1
-* Punkt 2
+Siin on kõik R failid, mis ma loengutes tegin:)
 ---
